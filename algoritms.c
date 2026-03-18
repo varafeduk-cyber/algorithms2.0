@@ -138,25 +138,45 @@ void heapsort(int arr[], int n){
 
 int main(){
     srand(time(NULL));
-    int n = 20;
-    int tab[n];
-    clock_t start,end;
-    double cpu_time_used;
-    start = clock();
+    int n, type, alg;
+    printf("Podaj liczbe elementow n: ");
+    if (scanf("%d", &n) != 1 || n <= 0) return 1;
 
+    int *tab = (int*)malloc(n * sizeof(int));
+    if (tab == NULL) return 1;
 
-    generateData(tab,n,0);
+    printf("\nWybierz rodzaj danych:\n");
+    printf("0 - Losowe\n1 - Rosnace\n2 - Malejace\n3 - Stale\n4 - A-ksztaltne\nWybor: ");
+    scanf("%d", &type);
+    generateData(tab, n, type);
 
-    printf("Liczby przed sortowaniem:\n");
-    for(int i = 0; i < n; i++) printf("%d ", tab[i]);
-    quicksort(tab,0,n - 1,1);
-    shellsort(tab,n);
+    printf("\nWybierz algorytm:\n");
+    printf("1 - Insertion Sort\n2 - Selection Sort\n3 - Shell Sort (Sedgewick)\n");
+    printf("4 - Heap Sort\n5 - Quick Sort (Pivot: Random)\nWybor: ");
+    scanf("%d", &alg);
 
-    end = clock();
-    cpu_time_used = ((double)(end - start))/CLOCKS_PER_SEC;
+    printf("\nPrzed sortowaniem:\n");
+    for (int i = 0; i < n; i++) printf("%d ", tab[i]);
+    printf("\n");
 
+    clock_t start = clock();
+
+    switch(alg) {
+        case 1: insertionsort(tab, n); break;
+        case 2: selectionsort(tab, n); break;
+        case 3: shellsort(tab, n); break;
+        case 4: heapsort(tab, n); break;
+        case 5: quicksort(tab, 0, n - 1, 1); break;
+        default: printf("Niepoprawny wybor.\n"); free(tab); return 1;
+    }
+
+    clock_t end = clock();
+    double cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+
+    
     printf("Liczby po sortowaniu:\n");
     for(int i = 0; i < n; i++) printf("%d ", tab[i]);
     printf("Czas dzialania algorytmow dla n=%d : %f sekund\n",n,cpu_time_used);
+    free(tab);
     return 0;
 }
