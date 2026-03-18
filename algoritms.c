@@ -1,6 +1,8 @@
+
 #include <stdio.h>
 #include <stdlib.h> 
 #include <time.h>
+#include <math.h>
 
     void insertionsort(int arr[], int n ){
         for(int i = 1; i < n; i++ ){
@@ -28,10 +30,35 @@
             int temp = arr[i];
             arr[i] = arr[min_z];
             arr[min_z] = temp;
-
         }
 
     }
+
+    void shellsort(int arr[], int n){
+    int gaps[20];
+    int k = 0;
+    for (int i = 0; ; i++) {
+        int gap;
+        if (i % 2 == 0) {
+            gap = 9 * pow(2, i) - 9 * pow(2, i / 2) + 1;
+        } else {
+            gap = 8 * pow(2, i) - 6 * pow(2, (i + 1) / 2) + 1;
+        }
+        if (gap >= n) break;
+        gaps[k++] = gap;
+    }
+    for (int i = k - 1; i >= 0; i--) {
+        int gap = gaps[i];
+        for (int j = gap; j < n; j++) {
+            int temp = arr[j];
+            int l;
+            for (l = j; l >= gap && arr[l - gap] > temp; l -= gap) {
+                arr[l] = arr[l - gap];
+            }
+            arr[l] = temp;
+        }
+    }
+}
 
  void heap(int arr[], int n,int i){
     int large = i;
@@ -109,11 +136,6 @@ void heapsort(int arr[], int n){
  }
 
 
-
-    
-
-
-
 int main(){
     srand(time(NULL));
     int n = 20;
@@ -128,7 +150,7 @@ int main(){
     printf("Liczby przed sortowaniem:\n");
     for(int i = 0; i < n; i++) printf("%d ", tab[i]);
     quicksort(tab,0,n - 1,1);
-    selectionsort(tab,n);
+    shellsort(tab,n);
 
     end = clock();
     cpu_time_used = ((double)(end - start))/CLOCKS_PER_SEC;
@@ -137,4 +159,4 @@ int main(){
     for(int i = 0; i < n; i++) printf("%d ", tab[i]);
     printf("Czas dzialania algorytmow dla n=%d : %f sekund\n",n,cpu_time_used);
     return 0;
- }
+}
