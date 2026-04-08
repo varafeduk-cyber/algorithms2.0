@@ -1,0 +1,391 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct Node{
+    int value;
+    struct Node *left;
+    struct Node *right;
+    int height;
+};
+
+struct Node* createNode(int value){
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+    newNode->value = value;
+    newNode->left = NULL;
+    newNode->right = NULL;
+    newNode->height = 1;
+    return newNode;
+}
+
+struct Node* insertBST(struct Node* node, int value){
+    if(node == NULL){
+        return createNode(value);
+    }
+    if(value < node->value){
+        node->left = insertBST(node->left,value);
+    }else if(value > node->value){
+        node->right = insertBST(node->right, value);
+    }
+    return node;
+}
+
+struct Node* buildBalancedAVL(int *arr, int start, int end){
+    if(start > end){
+        return NULL;
+    }
+    int mid = (start + end) / 2;
+    struct Node* node = createNode(arr[mid]);
+    node->left = buildBalancedAVL(arr, start, mid -1);
+    node->right = buildBalancedAVL(arr, mid + 1, end);
+    return node;
+
+}
+
+void printInOrder(struct Node* node){
+    if(node == NULL){
+        return;
+    }
+    printInOrder(node->left);
+    printf("%d ", node->value);
+    printInOrder(node->right);
+}
+
+void printPreOrder(struct Node* node){
+    if(node == NULL) return;
+    printf("%d ", node->value);
+    printPreOrder(node->left);
+    printPreOrder(node->right);
+}
+
+void printPostOrder(struct Node* node){
+     if(node == NULL) return;
+    printPostOrder(node->left);
+    printPostOrder(node->right);
+    printf("%d ", node->value);
+
+}
+
+//Bubble sort
+void sortArray(int *arr,int n){
+    for(int i = 0; i < n - 1; i++){
+        for(int j = 0; j < n  - i - 1; j++){
+            if(arr[j] > arr[j + 1]){
+                int temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+}
+
+void findMin(struct Node* node){
+    if(node == NULL){
+        printf("Tree is empty\n");
+        return;
+    }
+    struct Node* current = node;
+    while(current->left != NULL){
+        current = current->left;
+    }
+    printf("Min value: %d\n", current->value);
+}
+
+void findMax(struct Node* node){
+    if(node == NULL){
+        printf("Tree is empty\n");
+        return;
+    }
+    struct Node* current = node;
+    while(current->right != NULL){
+        current = current->right;
+    }
+    printf("Max value: %d\n", current->value);
+}
+
+struct Node* findTheChosenOne(struct Node* node){
+    struct Node* current = node;
+    while(current && current->left != NULL){
+        current = current->left;
+    }
+    return current; 
+}
+
+struct Node* deleteNode(struct Node* root, int value){
+    if(root = NULL) return root;
+
+    if(value < root->value)
+        root->left = deleteNode(root->left, value);
+    else if(value > root->value)
+        root->right = deleteNode(root->right, value);
+    else{
+//1 или детей совсем нет
+        if(root->left == NULL){
+            struct Node* temp = root->right;
+            free(root);
+            return temp;
+        } else if(root->right == NULL){
+            struct Node* temp = root->left;
+            free(root);
+            return temp;
+        }
+// Находим преемника (самый маленький в правом дереве)
+        struct Node* temp = findTheChosenOne(root->right);
+ // Копируем значение преемника в текущий узел
+        root->value = temp->value;
+// Удаляем преемника из правого поддерева
+        root->right = deleteNode(root->right, temp->value);
+    }
+    return root;
+}
+
+void freeTree(struct Node* node){
+    if(node == NULL) return;
+    freeTree(node->left);
+    freeTree(node->right);
+    free(node);
+}
+
+void exportToFile(struct Node* node, FILE* f){
+    if(node == NULL) return;
+    fprintf(f, "%d ", node->value);
+    exportToFile(node->left, f);
+    exportToFile(node->right, f);
+}
+
+void fillArray(struct Node* node, int* arr, int* index){
+    if(node == NULL) return;
+    fillArray(node->left, arr, index);
+    arr[*index] = node->value;
+    (*index)++;
+    fillArray(node->right, arr, index);
+}
+
+struct Node* rotateRight(struct Node* root, struct Node* pivot){
+    struct Node* temp = pivot->left;
+    pivot->left = temp->right;
+    temp->right = pivot;
+    return temp; 
+}
+
+struct Node* rotateLeft(struct Node* root, struct Node* pivot){
+    struct Node* temp = pivot->right;
+    pivot->right = temp->left;
+    temp->left = pivot;
+    return temp;
+}
+//Day-Stout-Warren 
+struct Node* balanceDSW(struct Node* root){
+    if(root = NULL) return NULL;
+    struct Node dummy;//vremennyj koren
+    dummy.right = root;
+    struct Node* prev = &dummy;
+    struct Node* curr = dummy.right;
+//prevraszczenie w lozu
+    int count = 0;
+    while(curr != NULL){
+        if(curr->left != NULL){
+            prev->right = rotateRight(curr,curr->left);
+            curr = prev->right;
+        }else {
+            count++;
+            prev = curr;
+            curr = curr->right;
+        }
+    }
+    //szatie cozdajem balanced derevo
+    int m = 1;
+    while(m <= count) m = m * 2 + 1;
+    m /=2;
+    curr = dummy.right;
+    prev = &dummy;
+    for(int i = 0; i < count - m; i++){
+        prev->right = rotateLeft(curr, curr->right);
+        prev = prev->right;
+        curr = prev->right;
+    }
+    while (m > 1)
+    {
+        m /= 2;
+        curr = dummy.right;
+        prev = &dummy;
+        for(int i = 0; i < m; i++){
+            prev->right = rotateLeft(curr, curr->right);
+            prev = prev->right;
+            curr = prev->right;
+        }
+    }
+    return dummy.right;
+}
+
+void exportTikZ(struct Node* node, FILE* f){
+    if(node == NULL) return;
+    fprintf(f, "node {%d}\n", node->value);
+    if(node->left || node->right){
+        fprintf(f, "child { ");
+        if(node->left) exportTikZ(node->left, f);
+        else fprintf(f, "node [missing] {}");
+        fprintf(f, " }\n");
+        fprintf(f, "child { ");
+        if(node->right) exportTikZ(node->right, f);
+        else fprintf(f, "node [missing] {}");
+        fprintf(f, " }\n");
+    }
+
+}
+
+
+
+
+
+
+
+
+int main(int argc, char *argv[]){
+    struct Node* root = NULL;
+    if (argc < 3){
+        printf("Using: ./program --tree [BST|AVL] \n");
+        return 1;
+    }
+
+    int isBST = (strcmp(argv[2],"BST") == 0 );
+    int isAVL = (strcmp(argv[2],"AVL") == 0);
+    if (!isBST && !isAVL){
+        printf("Unknown tree type. Please choose BST or AVL \n");
+        return 1;
+    }
+
+    printf("Selected tree: %s\n", argv[2]);
+
+    int total_nodes;
+    int numbers[1000];
+    int count = 0;
+
+    printf("nodes> ");
+    if (scanf("%d", &total_nodes) != 1) return 1;
+
+    printf("insert> ");
+    while (count < total_nodes) {
+        if (scanf("%d", &numbers[count]) == 1) {
+            count++;
+        } else {
+            while (getchar() != '\n'); 
+            break;
+        }
+    }
+
+    if(isBST){
+        printf("Inserting: ");
+        for(int i = 0; i < count; i++){
+            printf("%d%s", numbers[i], (i == count - 1 ? "" : ", "));
+            root = insertBST(root, numbers[i]);
+        }
+        printf("\n");
+    }
+     else if(isAVL){
+        sortArray(numbers, count);
+        printf("Sorted: ");
+        for(int i = 0; i < count; i++) printf("%d%s", numbers[i],(i == count - 1 ? "" : ", "));
+        printf("\n");
+
+        int mid = (0 + count - 1) / 2;
+        printf("Median: %d\n", numbers[mid]);
+        root = buildBalancedAVL(numbers, 0, count - 1);
+        
+    }
+
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+    clearerr(stdin); //чистим ошибочку скана, чтобы можно было вводить команды
+
+//Акцииииииииииииии
+    char action[20];
+    while (1)
+    {
+        printf("action?> ");
+        if(scanf("%s", action) !=1) break;
+
+        if(strcmp(action, "Help") == 0){
+            printf("Help        Show this message\n");
+            printf("Print       Print the tree using In-order, Pre-order, Post-order\n");
+            printf("Remove      Remove elements of the tree\n");
+            printf("Delete      Delete whole tree\n");
+            printf("Export      Export the tree to file\n");
+            printf("Rebalance   Rebalance the tree\n");
+            printf("Exit        Exits the program\n"); 
+        }else if(strcmp(action,"Print") == 0){
+            printf("In-order:  ");  printInOrder(root);    printf("\n");
+            printf("Pre-order:  "); printPreOrder(root);   printf("\n");
+            printf("Post-order:  "); printPostOrder(root); printf("\n");
+        }else if(strcmp(action,"FindMinMax") == 0){
+            findMin(root);
+            findMax(root);
+        }else if(strcmp(action,"Remove") == 0){
+            int val;
+            if(scanf("%d", &val) == 1){
+                root = deleteNode(root,val);
+                printf("Node %d removed (if it existed).\n", val);
+            }
+        }else if(strcmp(action, "Delete") == 0){
+            int n,val;
+            printf("nodes> ");
+            if(scanf("%d", &n) == 1){
+                printf("delete> ");
+                for(int i = 0; i < n; i++){
+                    if(scanf("%d", &val) == 1){
+                        root = deleteNode(root,val);
+                    }
+                }
+            }
+            while(getchar() != '\n');
+        }else if(strcmp(action, "DeleteAll") == 0){
+            char subAction[10];
+            scanf("%s", subAction);
+            if (strcmp(subAction, "All") == 0){
+                printf("Deleting: ");
+                printPostOrder(root);
+                freeTree(root);
+                root = NULL;
+                printf("\nTree successfully removed\n");
+            }  
+        }// else if(strcmp(action,"Export") == 0){
+           // FILE *f = fopen("export.txt", "w");
+         //   if(f){
+       //         exportToFile(root,f);
+     //           fclose(f);
+   //             printf("Exported to export.txt\n");
+ //           }
+ //       }
+        else if(strcmp(action, "Export") == 0){
+            FILE *f = fopen("export.tikz", "w");
+            if (f) {
+                fprintf(f, "\\"); // TikZ начинается со слеша
+                exportTikZ(root, f);
+                fprintf(f, ";\n"); // А заканчивается точкой с запятой
+                fclose(f);
+                printf("TikZ code exported to export.tikz\n");
+            }
+        }else if(strcmp(action, "Rebalance") == 0){
+            printf("Rebalancing using DSW method...\n");
+            root = balanceDSW(root);
+            printf("Pre-Order");
+            printPreOrder(root);
+            printf("\n");
+        } else if (strcmp(action, "Exit") == 0){
+            break;
+        }
+        else {
+            printf("Unknown action: %s\n", action);
+        }
+    }
+    
+
+
+
+
+
+
+
+   
+    return 0;
+} 
